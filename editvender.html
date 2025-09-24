@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Vendor Profile</title>
+<style>
+  body { font-family: Arial; background: #f2f2f2; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+  .form-container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); width: 350px; }
+  h2 { text-align: center; color: #333; }
+  label { font-weight: bold; display: block; margin-top: 10px; color: #555; }
+  input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+  button { width: 100%; margin-top: 15px; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+  button:hover { background: #218838; }
+</style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>Edit Profile</h2>
+    <form id="editVendorForm">
+      <label for="Vebder Name">Name:</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="password">Password: <small>(Leave blank to keep unchanged)</small></label>
+      <input type="password" id="password" name="password">
+
+      <button type="submit">Update Profile</button>
+    </form>
+  </div>
+
+  <script>
+    async function loadVendor() {
+      const token = localStorage.getItem("token");
+      if (!token) return alert("Not logged in");
+
+      // Optionally, you could have a GET /vendor route to fetch existing details
+      // Here, we'll assume we stored name/email somewhere or require them to retype
+    }
+
+    const form = document.getElementById("editVendorForm");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const token = localStorage.getItem("token");
+      if (!token) return alert("Not logged in");
+
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const res = await fetch("http://localhost:5000/vendor", {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({ name, email, password })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message);
+      } else {
+        alert(data.error);
+      }
+    });
+
+    loadVendor();
+  </script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Monthly Students - Tiffin Service</title>
+  <style>
+    body { background:#121212; color:#f1f1f1; font-family:"Segoe UI",sans-serif; padding:20px; margin:0; }
+    h2 { text-align:center; color:#00f2fe; margin-bottom:20px; }
+    .top-bar { display:flex; justify-content:flex-end; align-items:center; margin-bottom:15px; }
+    .add-btn { padding:10px 20px; background:linear-gradient(90deg,#4facfe,#00f2fe); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:700; margin-left:5px; }
+    table { width:100%; border-collapse:collapse; background:#1e1e1e; border-radius:8px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.5); }
+    th,td { padding:12px; text-align:left; border-bottom:1px solid #333; vertical-align:middle; }
+    th { background:#2a2a2a; color:#00f2fe; }
+    tr:hover { background:#333; }
+    .center { text-align:center; }
+    .action-btn { margin:2px; padding:6px 8px; border-radius:5px; border:none; cursor:pointer; font-weight:700; font-size:13px; }
+    .edit-btn { background:#4facfe; color:#fff; }
+    .delete-btn { background:#ff4c4c; color:#fff; }
+    .save-btn { background:#00f2fe; color:#000; }
+    .cancel-btn { background:#aaa; color:#000; }
+    /* profile overlay */
+    .profile-box { display:none; position:absolute; right:0; top:35px; background:#1e1e1e; color:#f1f1f1; padding:10px; border-radius:8px; width:220px; box-shadow:0 4px 10px rgba(0,0,0,0.4); z-index:100; font-size:14px; }
+    @media screen and (max-width:768px){
+      table,thead,tbody,th,td,tr{display:block;}
+      th{display:none;}
+      td{padding:10px;text-align:right;position:relative;}
+      td::before{content:attr(data-label);position:absolute;left:10px;font-weight:700;text-align:left;}
+      .top-bar{justify-content:center;}
+    }
+  </style>
+</head>
+<body>
+  <h2>All Students - Monthly Subscription</h2>
+  <div class="top-bar">
+    <button class="add-btn" onclick="window.location.href='dashboard.html'">➕ Add Student</button>
+    <a href="editvender.html" class="add-btn" style="text-decoration:none;">Edit Details</a>
+
+    <!-- Profile Button & Box -->
+    <div class="profile-container" style="position:relative; display:inline-block; margin-left:5px;">
+      <button class="add-btn" id="profileBtn" style="padding:8px 12px; font-size:14px;">👤 My Profile</button>
+      <div class="profile-box" id="profileBox">
+        <p><strong>Name:</strong> <span id="vendorName">Loading...</span></p>
+        <p><strong>Email:</strong> <span id="vendorEmail">Loading...</span></p>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th><th>Name</th><th>Phone</th><th>Meals/Day</th>
+        <th>Start Date</th><th>End Date</th><th>Total</th><th>Paid</th><th>Pending</th><th>Status</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="studentTable">
+      <tr><td colspan="12" class="center">Loading...</td></tr>
+    </tbody>
+  </table>
+
+<script>
+const API_URL = "http://localhost:5000/students";
+
+// ===== Helper Functions =====
+function toDateInputValue(isoOrText) {
+  try {
+    if (!isoOrText) return "";
+    const d = new Date(isoOrText);
+    if (isNaN(d)) return "";
+    return d.toISOString().slice(0,10);
+  } catch { return ""; }
+}
+function formatDMY(dateStr) {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  if (isNaN(d)) return "-";
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 0).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+function escapeHtml(str) {
+  return (str+"").replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" }[m]));
+}
+
+// ===== Load Students =====
+async function loadStudents() {
+  const token = localStorage.getItem("token");
+  if (!token) { alert("⚠️ Login first!"); window.location.href="index.html"; return; }
+  try {
+    const res = await fetch(API_URL, { headers:{ "Authorization":"Bearer "+token } });
+    const students = await res.json();
+    const tbody = document.getElementById("studentTable");
+    tbody.innerHTML = "";
+    if(!students.length){tbody.innerHTML='<tr><td colspan="12" class="center">No students found</td></tr>'; return;}
+    students.forEach((s,index)=>{
+      const startIso = s.startDate ? new Date(s.startDate).toISOString() : "";
+      const endIso = s.endDate ? new Date(s.endDate).toISOString() : "";
+      const startDisplay = formatDMY(startIso);
+      const endDisplay = formatDMY(endIso);
+      const status = (endIso && new Date() <= new Date(endIso)) ? "Active" : "Expired";
+      tbody.insertAdjacentHTML("beforeend",`
+        <tr id="row-${s._id}">
+          <td data-label="#">${index+1}</td>
+          <td data-label="Name">${escapeHtml(s.name||"")}</td>
+          <td data-label="Phone">${escapeHtml(s.phone||"")}</td>
+          <td data-label="Meals/Day">${escapeHtml(String(s.meals||""))}</td>
+          <td data-label="Start Date" data-start="${startIso}">${startDisplay}</td>
+          <td data-label="End Date" data-end="${endIso}">${endDisplay}</td>
+          <td data-label="Total">${s.totalAmount!=null?s.totalAmount:0}</td>
+          <td data-label="Paid">${s.paidAmount!=null?s.paidAmount:0}</td>
+          <td data-label="Pending">${s.pendingAmount!=null?s.pendingAmount:0}</td>
+          <td data-label="Status">${status}</td>
+          <td data-label="Actions">
+            <button class="action-btn edit-btn" onclick="editStudent('${s._id}')">Edit</button>
+            <button class="action-btn delete-btn" onclick="deleteStudent('${s._id}')">Delete</button>
+            <button class="action-btn save-btn" onclick="nextMonth('${s._id}')">Next Month</button>
+          </td>
+        </tr>
+      `);
+    });
+  } catch(err){ console.error(err); alert("⚠️ Unable to load students."); }
+}
+
+// ===== Delete Student =====
+async function deleteStudent(id){
+  if(!confirm("Delete this student?")) return;
+  const token=localStorage.getItem("token");
+  const res = await fetch(`${API_URL}/${id}`,{method:"DELETE",headers:{"Authorization":"Bearer "+token}});
+  if(res.ok){alert("✅ Student deleted"); loadStudents();}
+  else{alert("⚠️ Failed to delete");}
+}
+
+// ===== Edit/Save Student =====
+function editStudent(id){
+  const row=document.getElementById(`row-${id}`);
+  const cells=row.querySelectorAll("td");
+  cells[1].innerHTML=`<input type="text" value="${cells[1].innerText.trim()}" style="width:95%"/>`;
+  cells[2].innerHTML=`<input type="text" value="${cells[2].innerText.trim()}" style="width:95%"/>`;
+  const mealsVal=cells[3].innerText.trim()||"1";
+  cells[3].innerHTML=`<select>
+    <option value="1" ${mealsVal==="1"?"selected":""}>1</option>
+    <option value="2" ${mealsVal==="2"?"selected":""}>2</option>
+    <option value="3" ${mealsVal==="3"?"selected":""}>3</option>
+  </select>`;
+  const totalText=cells[6].innerText.trim()||"0";
+  const paidText=cells[7].innerText.trim()||"0";
+  const pendingText=cells[8].innerText.trim()||"0";
+  cells[6].innerHTML=`<input type="number" id="total-${id}" value="${totalText}" style="width:80px"/>`;
+  cells[7].innerHTML=`<input type="number" id="paid-${id}" value="${paidText}" style="width:80px"/>`;
+  cells[8].innerHTML=`<input type="number" id="pending-${id}" value="${pendingText}" readonly style="width:80px"/>`;
+  const endIso=cells[5].dataset.end||"";
+  const endDateVal=toDateInputValue(endIso||cells[5].innerText);
+  cells[5].innerHTML=`<input type="date" id="end-${id}" value="${endDateVal}" style="width:150px"/>`;
+  const totalInput=document.getElementById(`total-${id}`);
+  const paidInput=document.getElementById(`paid-${id}`);
+  const pendingInput=document.getElementById(`pending-${id}`);
+  function updatePending(){pendingInput.value=(parseFloat(totalInput.value)||0)-(parseFloat(paidInput.value)||0);}
+  totalInput.addEventListener("input",updatePending);
+  paidInput.addEventListener("input",updatePending);
+  updatePending();
+  cells[cells.length-1].innerHTML=`<button class="action-btn save-btn" onclick="saveStudent('${id}')">Save</button>
+    <button class="action-btn cancel-btn" onclick="loadStudents()">Cancel</button>`;
+}
+
+async function saveStudent(id){
+  const token=localStorage.getItem("token"); if(!token){alert("Login first"); return;}
+  const row=document.getElementById(`row-${id}`); const cells=row.querySelectorAll("td");
+  const name=cells[1].querySelector("input")?.value.trim()||cells[1].innerText.trim();
+  const phone=cells[2].querySelector("input")?.value.trim()||cells[2].innerText.trim();
+  const meals=cells[3].querySelector("select")?.value||cells[3].innerText.trim();
+  const total=parseFloat(cells[6].querySelector("input")?.value)||0;
+  const paid=parseFloat(cells[7].querySelector("input")?.value)||0;
+  const pending=parseFloat(cells[8].querySelector("input")?.value)||0;
+  const endInput=cells[5].querySelector("input");
+  const updatedData={name, phone, meals, totalAmount:total, paidAmount:paid, pendingAmount:pending};
+  if(endInput?.value) updatedData.endDate=new Date(endInput.value).toISOString();
+  const res=await fetch(`${API_URL}/${id}`,{method:"PUT",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify(updatedData)});
+  if(res.ok){alert("✅ Student updated"); loadStudents();}
+  else{alert("⚠️ Failed to update");}
+}
+
+// ===== Next Month =====
+async function nextMonth(id){
+  const token=localStorage.getItem("token"); if(!token){alert("Login first"); return;}
+  const row=document.getElementById(`row-${id}`); const cells=row.querySelectorAll("td");
+  let prevEnd=cells[5].dataset.end?new Date(cells[5].dataset.end):new Date();
+  let newStart=new Date(prevEnd); let newEnd=new Date(newStart); newEnd.setDate(newEnd.getDate()+30);
+  const total=parseFloat(cells[6].innerText)||0; const updatedData={startDate:newStart.toISOString(), endDate:newEnd.toISOString(), totalAmount:total, paidAmount:0, pendingAmount:total};
+  const res=await fetch(`${API_URL}/${id}`,{method:"PUT",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify(updatedData)});
+  if(res.ok){alert("✅ Subscription extended"); loadStudents();}
+  else{alert("⚠️ Failed to extend");}
+}
+
+// ===== Vendor Profile Overlay =====
+const profileBtn=document.getElementById("profileBtn");
+const profileBox=document.getElementById("profileBox");
+profileBtn.addEventListener("click",()=>{profileBox.style.display=(profileBox.style.display==="none"?"block":"none");});
+document.addEventListener("click",e=>{if(!profileBtn.contains(e.target)&&!profileBox.contains(e.target)) profileBox.style.display="none";});
+function loadVendorProfile(){
+  const token=localStorage.getItem("token");
+  if(!token) return;
+  try{
+    const payload=JSON.parse(atob(token.split('.')[1]));
+    document.getElementById("vendorName").innerText=payload.name||"N/A";
+    document.getElementById("vendorEmail").innerText=payload.email||"N/A";
+  }catch(err){console.error(err);}
+}
+loadVendorProfile();
+
+// ===== Initial Load =====
+loadStudents();
+</script>
+</body>
+</html>
