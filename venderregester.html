@@ -13,13 +13,15 @@
       align-items: center;
       height: 100vh;
       margin: 0;
+      padding: 10px;
     }
     .form-container {
       background: #fff;
       padding: 30px;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      width: 350px;
+      width: 100%;
+      max-width: 400px;
     }
     h2 {
       text-align: center;
@@ -53,28 +55,39 @@
     button:hover {
       background: #218838;
     }
+    .register-link {
+      display: block;
+      margin-top: 15px;
+      text-align: center;
+      color: #007bff;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .register-link:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
   <div class="form-container">
     <h2>Vendor Registration</h2>
-    <form action="https://deploy-project-1-1.onrender.com/register" method="POST">
-      <label for="name">Vendor Name:</label>
-      <input type="text" id="vendername" name="vendername" required>
+<form action="http://localhost:5000/register" method="POST">
+  <label for="vendorname">Vendor Name:</label>
+  <input type="text" id="vendorname" name="vendorname" required>
 
-      <label for="restaurant">Restaurant Name:</label>
-      <input type="text" id="restaurant" name="restaurant" required>
+  <label for="restaurant">Restaurant Name:</label>
+  <input type="text" id="restaurant" name="restaurant" required>
 
-      <label for="email">Email:</label>
-      <input type="email" id="email" name="email" required>
+  <label for="email">Email:</label>
+  <input type="email" id="email" name="email" required>
 
-      <label for="password">Password:</label>
-      <input type="password" id="password" name="password" required>
+  <label for="password">Password:</label>
+  <input type="password" id="password" name="password" required>
 
-      <button type="submit">Register</button>
-    </form>
-        <a href="venderlogin.html" class="register-link">Have an account? Login here</a>
+  <button type="submit">Register</button>
+</form>
 
+    <a href="vendorlogin.html" class="register-link">Have an account? Login here</a>
   </div>
 </body>
 </html>

@@ -131,7 +131,6 @@
         document.getElementById("endDate").value = end.toISOString().split("T")[0];
       }
     });
-
     // Auto-calculate pending amount
     const totalAmount = document.getElementById("totalAmount");
     const paidAmount = document.getElementById("paidAmount");
@@ -169,7 +168,7 @@
       };
 
       try {
-        const res = await fetch("https://deploy-project-1-1.onrender.com/students", {
+        const res = await fetch("http://localhost:5000/studentsadd", {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",
