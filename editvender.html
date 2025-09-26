@@ -111,7 +111,7 @@ document.getElementById("editVendorForm").addEventListener("submit", async (e) =
   const password = document.getElementById("password").value;
 
   try {
-    const res = await fetch("http://localhost:5000/vendor", {
+    const res = await fetch("https://deploy-project-1-1.onrender.com/vendor", {
       method: "PUT",
       headers: { 
         "Content-Type": "application/json",
