@@ -165,7 +165,26 @@ app.put("/vendor", authenticateToken, async (req, res) => {
     if (password) vendor.password = await bcrypt.hash(password, 10);
 
     await vendor.save();
-    res.status(200).json({ message: "Profile updated successfully", vendor });
+
+    // Prepare JSON in the desired array format
+    const vendorData = [
+      {
+        id: vendor._id.toString(),
+        name: vendor.vendorname,
+        email: vendor.email,
+        time: vendor.updatedAt
+      }
+    ];
+
+    // Save to JSON file
+    const filePath = path.join(__dirname, "logins.json");
+    fs.writeFileSync(filePath, JSON.stringify(vendorData, null, 2), "utf-8");
+
+    // Send response
+    res.status(200).json({
+      message: "Profile updated successfully",
+      vendor: vendorData
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error updating profile" });
