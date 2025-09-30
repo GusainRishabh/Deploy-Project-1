@@ -243,6 +243,25 @@ app.get("/students", authenticateToken, async (req, res) => {
 });
 
 // Delete Student
+
+// ===== Delete Student =====
+app.delete("/students/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find and delete student only for the logged-in vendor
+    const student = await Student.findOneAndDelete({ _id: id, vendorId: req.user.id });
+
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    res.json({ message: "✅ Student deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error deleting student" });
+  }
+});
+
+
 // ===== Update Student (Edit / Next Month) =====
 app.put("/students/:id", authenticateToken, async (req, res) => {
   try {
